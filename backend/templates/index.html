@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Debate Coach</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+        :root { --tw-color-primary: #00d4ff; }
+        body { font-family: 'Inter', system_ui, sans-serif; }
+        .title-font { font-family: 'Space Grotesk', sans-serif; }
+        .video-container { position: relative; border-radius: 20px; overflow: hidden; box-shadow: 0 25px 50px -12px rgb(0 212 255 / 0.15); }
+        .feedback-bar { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    </style>
+</head>
+<body class="bg-zinc-950 text-white">
+    <!-- NAVBAR -->
+    <nav class="border-b border-white/10 bg-zinc-900/80 backdrop-blur-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between">
+            <div class="flex items-center gap-x-3">
+                <div class="w-9 h-9 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-2xl flex items-center justify-center text-2xl">🗣️</div>
+                <h1 class="title-font text-3xl tracking-tighter">AI Debate Coach</h1>
+            </div>
+            <div class="flex items-center gap-x-8 text-sm font-medium">
+                <a onclick="navigateTo('home')" class="cursor-pointer hover:text-cyan-400 transition-colors" id="nav-home">Home</a>
+                <a onclick="navigateTo('debate')" class="cursor-pointer hover:text-cyan-400 transition-colors" id="nav-debate">Practice Debate</a>
+                <a onclick="navigateTo('dashboard')" class="cursor-pointer hover:text-cyan-400 transition-colors" id="nav-dashboard">Dashboard</a>
+            
+                <button onclick="toggleCoachMode()" 
+                        class="px-6 py-2 bg-white text-zinc-950 rounded-3xl font-semibold flex items-center gap-x-2 hover:shadow-xl hover:shadow-cyan-400/20 transition-all">
+                    <span id="coach-btn-text">Coach Mode</span>
+                    <span class="text-lg">🧠</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HOME / LANDING -->
+    <div id="home-screen" class="max-w-7xl mx-auto px-8 py-16">
+        <div class="grid grid-cols-2 gap-16 items-center">
+            <div>
+                
+                <h2 class="title-font text-7xl leading-none tracking-tighter mb-6">
+                    Master debates.<br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">With AI that sees you.</span>
+                </h2>
+                <p class="text-xl text-zinc-400 max-w-md mb-10">
+                    Practice with an intelligent AI opponent.<br>
+                    Get live feedback on your words, voice, eyes, and posture.
+                </p>
+                <div class="flex items-center gap-x-4">
+                    <button onclick="navigateTo('debate')" 
+                            class="px-8 py-5 bg-gradient-to-r from-cyan-400 to-blue-500 text-zinc-950 font-semibold text-lg rounded-3xl flex items-center gap-x-3 hover:scale-105 transition-transform">
+                        Start Your Debate Practice
+                        <span class="text-3xl">→</span>
+                    </button>
+                    
+                </div>
+                
+            </div>
+            
+                </div>
+                
+            </div>
+        </div>
+
+        <!-- Tech stack badges -->
+        
+    </div>
+
+    <!-- DEBATE ROOM -->
+    <div id="debate-screen" class="hidden max-w-7xl mx-auto px-8 py-8">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <span class="text-xs font-medium tracking-widest bg-cyan-400/10 text-cyan-400 px-4 py-1 rounded-3xl">TOPIC</span>
+                <h3 id="debate-topic" class="text-3xl font-semibold mt-1">Should governments regulate AI development?</h3>
+            </div>
+            <div class="flex items-center gap-x-6">
+                <div class="flex items-center gap-x-3">
+                    <span class="text-sm">Difficulty</span>
+                    <div onclick="setDifficulty(1)" id="diff-1" class="cursor-pointer px-4 h-8 rounded-3xl bg-white/10 text-white flex items-center text-sm hover:bg-cyan-400 hover:text-zinc-950">Beginner</div>
+                    <div onclick="setDifficulty(2)" id="diff-2" class="cursor-pointer px-4 h-8 rounded-3xl bg-white/10 text-white flex items-center text-sm hover:bg-cyan-400 hover:text-zinc-950">Intermediate</div>
+                    <div onclick="setDifficulty(3)" id="diff-3" class="cursor-pointer px-4 h-8 rounded-3xl bg-emerald-400 text-zinc-950 flex items-center text-sm">Advanced</div>
+                </div>
+                <button onclick="endDebate()" 
+                        class="px-6 py-2 border border-red-400 text-red-400 hover:bg-red-400 hover:text-white rounded-3xl text-sm font-medium">End Debate</button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-6">
+            <!-- LEFT: USER CAMERA + LIVE METRICS -->
+            <!-- LEFT: USER CAMERA + LIVE METRICS (Updated) -->
+<div class="col-span-3">
+    <!-- Camera Video -->
+    <div class="video-container bg-black aspect-video rounded-3xl overflow-hidden border border-white/10 relative">
+        <video id="user-video" autoplay playsinline class="w-full h-full object-cover"></video>
+        <canvas id="face-canvas" class="absolute top-0 left-0 w-full h-full pointer-events-none"></canvas>
+        
+        <!-- Optional small live indicator -->
+        <div class="absolute top-4 left-4 bg-black/60 backdrop-blur-md text-xs px-3 py-1 rounded-2xl flex items-center gap-2">
+            <span class="relative flex h-3 w-3">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-400"></span>
+            </span>
+            LIVE CAMERA
+        </div>
+    </div>
+
+    <!-- Metrics moved BELOW the camera -->
+    <div class="mt-4 bg-zinc-900 border border-white/10 rounded-3xl p-6">
+        <div class="grid grid-cols-2 gap-6">
+            <!-- Eye Contact -->
+            <div>
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm flex items-center gap-2">
+                        👁️ Eye Contact
+                    </span>
+                    <span id="eye-contact" class="font-semibold text-emerald-400 text-lg">87%</span>
+                </div>
+                <div class="h-2.5 bg-white/10 rounded-full overflow-hidden">
+                    <div id="eye-bar" class="feedback-bar h-2.5 bg-emerald-400 rounded-full w-[87%]"></div>
+                </div>
+            </div>
+
+            <!-- Filler Words -->
+            <div>
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm flex items-center gap-2">
+                        🗣️ Filler Words
+                    </span>
+                    <span id="filler-count" class="font-semibold text-amber-400 text-lg">3</span>
+                </div>
+                <div class="h-2.5 bg-white/10 rounded-full overflow-hidden">
+                    <div id="filler-bar" class="feedback-bar h-2.5 bg-amber-400 rounded-full w-[30%]"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pace and Posture (kept in one row for balance) -->
+        <div class="grid grid-cols-2 gap-6 mt-6 pt-6 border-t border-white/10">
+            <div>
+                <div class="flex justify-between mb-1">
+                    <span class="text-sm">⚡Pace</span>
+                    <span id="pace-status" class="font-semibold text-cyan-400">Perfect</span>
+                </div>
+                <p id="pace-value" class="text-xs text-zinc-400">142 words/min</p>
+            </div>
+            <div>
+                <div class="flex justify-between mb-1">
+                    <span class="text-sm">🪑 Posture</span>
+                    <span id="posture-status" class="font-semibold text-emerald-400">Confident</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-3 text-center text-xs text-zinc-400">
+        Camera processed locally with MediaPipe • Privacy guaranteed
+    </div>
+</div>
+
+            <!-- CENTER: DEBATE TRANSCRIPT -->
+            <div class="col-span-6">
+                <div class="bg-zinc-900 border border-white/10 rounded-3xl h-[560px] flex flex-col">
+                    <div id="transcript" class="flex-1 p-6 overflow-y-auto space-y-6 text-sm">
+                        <!-- JS injected messages -->
+                    </div>
+                    
+                    <!-- Input area -->
+                    <div class="border-t border-white/10 p-4 flex items-center gap-x-3">
+                        <button onclick="startSpeechRecognition()" 
+                                id="mic-btn"
+                                class="flex-1 h-14 bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-zinc-950 font-semibold rounded-3xl flex items-center justify-center gap-x-3 text-lg transition-all active:scale-95">
+                            <span id="mic-icon">🎤</span>
+                            <span id="mic-text">Hold to Speak</span>
+                        </button>
+                        
+                        <input id="text-input" type="text" placeholder="Or type your argument..." 
+                               class="flex-1 bg-white/10 border border-white/20 focus:border-cyan-400 rounded-3xl px-6 h-14 outline-none text-white placeholder:text-white/40">
+                        
+                        <button onclick="sendTextArgument()" 
+                                class="h-14 w-14 bg-white/10 hover:bg-white/20 border border-white/20 rounded-3xl flex items-center justify-center text-2xl">↑</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: AI COACH PANEL -->
+            <div class="col-span-3 bg-zinc-900 border border-white/10 rounded-3xl p-6 flex flex-col">
+                <div class="font-medium flex items-center gap-x-2 mb-4">
+                    <span class="text-cyan-400">🧠</span> AI Strategic Coach
+                </div>
+                <div id="coach-panel" class="flex-1 text-sm leading-relaxed text-zinc-300 overflow-y-auto">
+                    <p class="italic">Your turn! Speak clearly and maintain eye contact.</p>
+                </div>
+                
+                <div class="mt-auto pt-6 border-t border-white/10">
+                    <div class="text-xs font-medium mb-2">Argument Strength</div>
+                    <div class="flex items-center gap-x-2">
+                        <div id="strength-bar" class="flex-1 h-3 bg-gradient-to-r from-red-400 via-amber-400 to-emerald-400 rounded-3xl relative">
+                            <div id="strength-indicator" class="absolute top-1/2 -mt-1 w-4 h-4 bg-white rounded-full shadow-md" style="left: 65%"></div>
+                        </div>
+                        <span id="strength-score" class="font-mono text-2xl font-semibold text-emerald-400">78</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard-screen" class="hidden max-w-7xl mx-auto px-8 py-12">
+        <h2 class="title-font text-5xl mb-2">Your Progress</h2>
+        <p class="text-zinc-400 mb-8">Last 7 debates • Average score rising</p>
+        
+        <div class="grid grid-cols-12 gap-6">
+            <div class="col-span-8 bg-zinc-900 border border-white/10 rounded-3xl p-8">
+                <canvas id="progress-chart" class="w-full h-96"></canvas>
+            </div>
+            
+            <div class="col-span-4 space-y-6">
+                <div class="bg-zinc-900 border border-white/10 rounded-3xl p-6">
+                    <div class="text-sm font-medium mb-4">Overall Score Trend</div>
+                    <div class="text-7xl font-semibold text-transparent bg-clip-text bg-gradient-to-br from-cyan-400 to-emerald-400" id="avg-score">84</div>
+                    <div class="text-emerald-400 text-sm flex items-center gap-x-1">↑ 12 pts this week</div>
+                </div>
+                
+                <div class="bg-zinc-900 border border-white/10 rounded-3xl p-6">
+                    <div class="text-sm font-medium mb-6">Recent Debates</div>
+                    <div id="recent-list" class="space-y-4 text-sm"></div>
+                </div>
+                
+                <button onclick="exportReport()" 
+                        class="w-full h-12 border border-white/30 rounded-3xl text-white flex items-center justify-center gap-x-2 hover:bg-white/5">
+                    📤 Export Full Report (PDF)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div onclick="if(event.target.id === 'modal-bg')hideModal()" id="modal-bg" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center">
+        <div onclick="event.stopImmediatePropagation()" class="bg-zinc-900 rounded-3xl max-w-lg w-full mx-4 p-8">
+            <h3 id="modal-title" class="text-2xl font-semibold mb-6"></h3>
+            <div id="modal-content" class="text-zinc-300"></div>
+            <button onclick="hideModal()" 
+                    class="mt-8 w-full py-4 bg-white text-zinc-950 rounded-3xl font-semibold">Got it, thanks!</button>
+        </div>
+    </div>
+
+    <script>
+        // Tailwind script initialization
+        function initializeTailwind() {
+            tailwind.config = {
+                content: [],
+                theme: { extend: {} }
+            }
+        }
+
+        // Global variables
+        let currentSessionId = null
+        let currentDifficulty = 2
+        let debateHistory = []
+        let metricsInterval = null
+        let speechRecognition = null
+        let videoStream = null
+        let canvasCtx = null
+        let isCoachMode = false
+        let chartInstance = null
+
+        // Fake Gemini responses for demo (in real app these come from Flask backend)
+        const sampleResponses = {
+            1: "Interesting point. However, unregulated AI could lead to massive job displacement. What safeguards would you propose?",
+            2: "You're missing the economic angle. Countries that heavily regulate AI are falling behind in innovation. Data from China shows...",
+            3: "Strong argument, but let's look at the ethical implications. The EU AI Act already proves regulation can work without stifling progress."
+        }
+
+        // Simple filler word detector
+        function countFillers(text) {
+            const fillers = ['um', 'uh', 'like', 'you know', 'actually', 'basically', 'literally', 'sort of']
+            let count = 0
+            const lower = text.toLowerCase()
+            fillers.forEach(f => { count += (lower.match(new RegExp(f, 'g')) || []).length })
+            return count
+        }
+
+        // Simulate MediaPipe eye contact (in production replace with real MediaPipe FaceMesh)
+        function simulateEyeContact() {
+            // Random realistic values between 60-98%
+            const percent = Math.floor(65 + Math.random() * 33)
+            document.getElementById('eye-contact').textContent = percent + '%'
+            document.getElementById('eye-bar').style.width = percent + '%'
+            
+            // Posture & pace also simulated
+            const pace = Math.floor(110 + Math.random() * 60)
+            document.getElementById('pace-value').textContent = pace + ' words/min'
+            document.getElementById('pace-status').textContent = pace > 130 && pace < 160 ? 'Perfect' : pace > 160 ? 'Fast' : 'Slow'
+            
+            document.getElementById('posture-status').textContent = percent > 80 ? 'Confident' : 'Needs improvement'
+            return percent
+        }
+        // Save performance to localStorage for dashboard
+function savePerformanceToHistory(strengthScore, fillers) {
+    let history = JSON.parse(localStorage.getItem('debateHistory') || '[]');
+    
+    history.push({
+        date: new Date().toISOString().slice(0, 10),
+        score: parseInt(strengthScore),
+        topic: document.getElementById('debate-topic').textContent || "AI Regulation Debate",
+        fillers: parseInt(fillers) || 0
+    });
+
+    // Keep only last 7 debates
+    if (history.length > 7) history.shift();
+
+    localStorage.setItem('debateHistory', JSON.stringify(history));
+}
+
+        // Start camera
+        async function startCamera() {
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+                const video = document.getElementById('user-video')
+                video.srcObject = videoStream
+                
+                const canvas = document.getElementById('face-canvas')
+                canvas.width = video.videoWidth || 640
+                canvas.height = video.videoHeight || 480
+                canvasCtx = canvas.getContext('2d')
+                
+                // Simulate MediaPipe overlay every 800ms
+                setInterval(() => {
+                    if (canvasCtx && videoStream) {
+                        canvasCtx.clearRect(0, 0, canvas.width, canvas.height)
+                        // Simple green box around face (placeholder for real landmarks)
+                        canvasCtx.strokeStyle = '#00d4ff'
+                        canvasCtx.lineWidth = 6
+                        canvasCtx.strokeRect(80, 60, canvas.width - 160, canvas.height - 140)
+                        simulateEyeContact()
+                    }
+                }, 800)
+                
+                console.log('%c✅ Camera + MediaPipe simulation started (local processing)', 'color:#00d4ff;font-size:10px')
+            } catch (err) {
+                console.log('Camera permission denied or not available')
+            }
+        }
+
+        // Speech Recognition (Web Speech API)
+        // PRESS TO START / PRESS AGAIN TO STOP - Voice Recognition
+let isListening = false;
+
+function startSpeechRecognition() {
+    const micBtn = document.getElementById('mic-btn');
+
+    if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
+        alert('Your browser does not support Speech Recognition. Please use Google Chrome!');
+        return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    // If already listening → STOP it
+    if (isListening && speechRecognition) {
+        speechRecognition.stop();
+        return;
+    }
+
+    // Otherwise → START listening
+    speechRecognition = new SpeechRecognition();
+    speechRecognition.continuous = true;        // Keep listening until we stop
+    speechRecognition.interimResults = true;
+    speechRecognition.lang = 'en-US';
+
+    let finalTranscript = '';
+
+    speechRecognition.onresult = (event) => {
+        let interimTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+            const transcriptPart = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+                finalTranscript += transcriptPart + ' ';
+            } else {
+                interimTranscript = transcriptPart;
+            }
+        }
+
+        // Show live text in the input box
+        document.getElementById('text-input').value = finalTranscript + interimTranscript;
+    };
+
+    speechRecognition.onend = () => {
+        isListening = false;
+        resetMicButton();
+        
+        // If we have final text, auto-send it
+        if (finalTranscript.trim()) {
+            document.getElementById('text-input').value = finalTranscript.trim();
+            sendTextArgument();
+            finalTranscript = '';   // Clear for next time
+        }
+    };
+
+    speechRecognition.onerror = (event) => {
+        console.error('Speech error:', event);
+        isListening = false;
+        resetMicButton();
+    };
+
+    // Start listening
+    try {
+        speechRecognition.start();
+        isListening = true;
+        updateMicButtonToListening();
+    } catch (err) {
+        console.error(err);
+        isListening = false;
+        resetMicButton();
+    }
+}
+
+// Helper function to change button to "Listening" state
+function updateMicButtonToListening() {
+    const micBtn = document.getElementById('mic-btn');
+    micBtn.innerHTML = `
+        <span class="animate-pulse">🔴</span> 
+        Listening... Click again to stop
+    `;
+    micBtn.classList.add('!bg-red-500', '!text-white', 'scale-105');
+}
+
+// Helper function to reset button to normal
+function resetMicButton() {
+    const micBtn = document.getElementById('mic-btn');
+    micBtn.innerHTML = `
+        <span id="mic-icon">🎤</span>
+        <span id="mic-text">Hold to Speak</span>
+    `;
+    micBtn.classList.remove('!bg-red-500', '!text-white', 'scale-105');
+}
+
+// ================== AI VOICE SPEECH ==================
+function speakAIResponse(text) {
+    if ('speechSynthesis' in window) {
+        // Cancel any ongoing speech
+        window.speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        
+        // Make the AI voice sound more natural and confident
+        utterance.rate = 1.05;      // Slightly faster than normal
+        utterance.pitch = 1.0;
+        utterance.volume = 0.95;
+
+        // Optional: Try to use a better voice if available
+        const voices = window.speechSynthesis.getVoices();
+        const goodVoice = voices.find(voice => 
+            voice.name.includes("Samantha") || 
+            voice.name.includes("Karen") || 
+            voice.name.includes("Daniel") ||
+            voice.lang === "en-US"
+        );
+        
+        if (goodVoice) {
+            utterance.voice = goodVoice;
+        }
+
+        window.speechSynthesis.speak(utterance);
+
+        console.log("%c🗣️ AI is speaking: " + text.substring(0, 60) + "...", "color:#00d4ff");
+    } else {
+        console.log("Speech Synthesis not supported in this browser");
+    }
+}
+        // Send argument to backend (in real app this calls Flask)
+        // Replace the entire sendTextArgument() function with this:
+async function sendTextArgument() {
+    const input = document.getElementById('text-input');
+    const text = input.value.trim();
+    if (!text || !currentSessionId) return;
+
+    addMessageToTranscript('user', text);
+    const eye = parseInt(document.getElementById('eye-contact').textContent) || 85;
+
+    try {
+        const res = await fetch('/api/user_turn', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                session_id: currentSessionId,
+                user_text: text,
+                eye_contact: eye
+            })
+        });
+
+        const data = await res.json();
+
+        if (data.error) {
+            alert("Error: " + data.error);
+            return;
+        }
+
+        // Add AI response to transcript + speak
+        addMessageToTranscript('ai', data.ai_response);
+        speakAIResponse(data.ai_response);
+
+        // === FIXED: Update Coach Panel ===
+        document.getElementById('coach-panel').innerHTML = `
+            <p class="font-medium mb-2 text-cyan-400">💡 Strategic Coach</p>
+            <p class="text-sm leading-relaxed">${data.coach_tip}</p>
+        `;
+
+        // === FIXED: Update Argument Strength (Real-time) ===
+        if (data.metrics) {
+            const strength = data.metrics.strength_score;
+            document.getElementById('strength-score').textContent = strength;
+            document.getElementById('strength-indicator').style.left = strength + '%';
+            
+            // Optional: Change color based on score
+            const strengthBar = document.getElementById('strength-bar');
+            if (strength >= 80) {
+                strengthBar.style.background = 'linear-gradient(to right, #10b981, #34d399)';
+            } else if (strength >= 60) {
+                strengthBar.style.background = 'linear-gradient(to right, #eab308, #f59e0b)';
+            } else {
+                strengthBar.style.background = 'linear-gradient(to right, #ef4444, #f87171)';
+            }
+        }
+
+    } catch (err) {
+        console.error(err);
+        addMessageToTranscript('ai', "Sorry, I'm having trouble responding right now.");
+    }
+
+    input.value = '';
+}
+        function addMessageToTranscript(sender, text) {
+            const container = document.getElementById('transcript')
+            const bubble = document.createElement('div')
+            bubble.className = sender === 'user' 
+                ? 'ml-auto max-w-[80%] bg-cyan-400 text-zinc-950 p-4 rounded-3xl rounded-br-none' 
+                : 'mr-auto max-w-[80%] bg-white/10 p-4 rounded-3xl rounded-bl-none'
+            bubble.innerHTML = `<p>${text}</p>`
+            container.appendChild(bubble)
+            container.scrollTop = container.scrollHeight
+            debateHistory.push({ sender, text })
+        }
+
+        // Start a new debate session (calls Flask in real app)
+        async function startDebate() {
+    try {
+        const res = await fetch('/api/start_debate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                topic: "Should governments regulate AI development?",
+                difficulty: currentDifficulty
+            })
+        });
+
+        const data = await res.json();
+
+        currentSessionId = data.session_id;
+
+        document.getElementById('transcript').innerHTML = `
+            <div class="flex justify-center py-8 text-zinc-400 text-sm">AI Opponent joined the debate</div>
+        `;
+        debateHistory = [];
+
+        await startCamera();
+
+        metricsInterval = setInterval(() => {
+            simulateEyeContact();
+        }, 1500);
+
+        addMessageToTranscript('ai', data.ai_greeting);
+        document.getElementById('coach-panel').innerHTML = `<p class="text-cyan-400">🎯 Ready? Speak with confidence and maintain eye contact.</p>`;
+
+        console.log('%c🚀 Real debate session started with Flask + Gemini', 'background:#00d4ff;color:#000;padding:2px 6px');
+
+    } catch (err) {
+        console.error(err);
+        alert("Could not start debate. Make sure the backend (python app.py) is running.");
+    }
+}
+
+        function setDifficulty(level) {
+            currentDifficulty = level
+            document.querySelectorAll('#diff-1,#diff-2,#diff-3').forEach(el => {
+                if (parseInt(el.id.split('-')[1]) === level) {
+                    el.classList.add('bg-emerald-400', 'text-zinc-950')
+                    el.classList.remove('bg-white/10')
+                } else {
+                    el.classList.remove('bg-emerald-400', 'text-zinc-950')
+                    el.classList.add('bg-white/10')
+                }
+            })
+        }
+
+        function endDebate() {
+    if (metricsInterval) clearInterval(metricsInterval);
+    if (speechRecognition) speechRecognition.stop();
+    if (videoStream) {
+        videoStream.getTracks().forEach(t => t.stop());
+    }
+
+    // Get final strength score
+    const finalScore = parseInt(document.getElementById('strength-score').textContent) || 75;
+
+    // Save to history for dashboard
+    savePerformanceToHistory(finalScore, document.getElementById('filler-count').textContent);
+
+    // Show summary modal
+    document.getElementById('modal-title').textContent = 'Debate Complete - Strategic Analysis';
+    document.getElementById('modal-content').innerHTML = `
+        <div class="space-y-8">
+            <div class="flex justify-between items-center">
+                <div class="text-2xl">Overall Performance</div>
+                <div class="text-6xl font-semibold text-emerald-400">${finalScore}</div>
+            </div>
+           
+            <div class="grid grid-cols-3 gap-4 text-center">
+                <div class="bg-white/5 rounded-3xl p-5">
+                    <p class="text-xs mb-1 text-emerald-400">VERBAL</p>
+                    <p class="text-5xl font-semibold">89</p>
+                </div>
+                <div class="bg-white/5 rounded-3xl p-5">
+                    <p class="text-xs mb-1 text-amber-400">NON-VERBAL</p>
+                    <p class="text-5xl font-semibold">${document.getElementById('eye-contact').textContent}</p>
+                </div>
+                <div class="bg-white/5 rounded-3xl p-5">
+                    <p class="text-xs mb-1 text-cyan-400">STRATEGY</p>
+                    <p class="text-5xl font-semibold">${finalScore}</p>
+                </div>
+            </div>
+            <div onclick="navigateTo('dashboard');hideModal()" 
+                 class="text-center text-cyan-400 cursor-pointer font-medium mt-6">
+                View Full Progress Dashboard →
+            </div>
+        </div>
+    `;
+
+    document.getElementById('modal-bg').classList.remove('hidden');
+    document.getElementById('modal-bg').classList.add('flex');
+
+    currentSessionId = null;
+}
+
+        function saveToLocalDB() {
+            // In real app this would POST to Flask /api/save_performance
+            let history = JSON.parse(localStorage.getItem('debateHistory') || '[]')
+            history.push({
+                date: new Date().toISOString().slice(0,10),
+                score: 83,
+                topic: document.getElementById('debate-topic').textContent,
+                fillers: 2
+            })
+            localStorage.setItem('debateHistory', JSON.stringify(history.slice(-7)))
+        }
+
+        // Dashboard rendering
+        function renderDashboard() {
+            const history = JSON.parse(localStorage.getItem('debateHistory') || '[]')
+            const listHTML = history.map(item => `
+                <div class="flex justify-between text-xs">
+                    <div>
+                        <span class="font-medium">${item.topic.substring(0,28)}...</span><br>
+                        <span class="text-zinc-400">${item.date}</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="font-mono text-3xl">${item.score}</span>
+                        <div class="text-emerald-400 text-[10px]">fillers: ${item.fillers}</div>
+                    </div>
+                </div>
+            `).join('')
+            document.getElementById('recent-list').innerHTML = listHTML || '<p class="text-zinc-400 text-sm">No debates yet. Start practicing!</p>'
+            
+            // Chart
+            const ctx = document.getElementById('progress-chart')
+            if (chartInstance) chartInstance.destroy()
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: history.map(h => h.date),
+                    datasets: [{
+                        label: 'Overall Score',
+                        data: history.map(h => h.score),
+                        borderColor: '#00d4ff',
+                        tension: 0.3,
+                        borderWidth: 4
+                    }]
+                },
+                options: { plugins: { legend: { display: false } }, scales: { y: { min: 50, max: 100 } } }
+            })
+            
+            // Average
+            if (history.length) {
+                const avg = Math.round(history.reduce((a,c) => a + c.score, 0) / history.length)
+                document.getElementById('avg-score').textContent = avg
+            }
+        }
+
+        function exportReport() {
+            alert('✅ In a real app this would generate a beautiful PDF report using Flask + WeasyPrint')
+            // Real implementation would call Flask endpoint /api/export_pdf
+        }
+
+        function toggleCoachMode() {
+            isCoachMode = !isCoachMode
+            const btn = document.getElementById('coach-btn-text')
+            btn.textContent = isCoachMode ? 'Exit Coach Mode' : 'Coach Mode'
+            if (isCoachMode) {
+                alert('🧠 Coach Mode activated!\n\nYou will now receive deeper strategic explanations after every turn.')
+            }
+        }
+
+        function navigateTo(screen) {
+            document.querySelectorAll('#home-screen, #debate-screen, #dashboard-screen').forEach(s => s.classList.add('hidden'))
+            
+            if (screen === 'home') document.getElementById('home-screen').classList.remove('hidden')
+            if (screen === 'debate') {
+                document.getElementById('debate-screen').classList.remove('hidden')
+                if (!currentSessionId) startDebate()
+            }
+            if (screen === 'dashboard') {
+                document.getElementById('dashboard-screen').classList.remove('hidden')
+                renderDashboard()
+            }
+            
+            // Update nav highlight
+            document.querySelectorAll('nav a').forEach(a => a.classList.remove('text-cyan-400'))
+            document.getElementById('nav-' + screen).classList.add('text-cyan-400')
+        }
+
+        function showVideoDemo() {
+            document.getElementById('modal-title').textContent = 'How AI Debate Coach Works'
+            document.getElementById('modal-content').innerHTML = `
+                <video autoplay loop muted playsinline class="w-full rounded-3xl" src="https://assets.mixkit.co/videos/preview/1234/1234-small.mp4"></video>
+                <p class="text-center text-xs mt-4 text-zinc-400">45-second demo: Speech → Gemini counter → MediaPipe eye tracking → Instant feedback</p>
+            `
+            document.getElementById('modal-bg').classList.remove('hidden')
+            document.getElementById('modal-bg').classList.add('flex')
+        }
+
+        function hideModal() {
+            const modal = document.getElementById('modal-bg')
+            modal.classList.add('hidden')
+            modal.classList.remove('flex')
+        }
+
+        // Initialize entire app
+        window.onload = function() {
+            initializeTailwind()
+            console.log('%c✅ AI Debate Coach UI + Backend simulation ready', 'background:#00d4ff;color:#111;font-weight:600;padding:2px 6px')
+            console.log('🔗 Flask backend endpoints you need to implement are commented in the code below')
+            
+            // Default to home
+            navigateTo('home')
+            
+            // For development: auto open debate after 2s if you want to test
+            // setTimeout(() => navigateTo('debate'), 2000)
+        }
+    </script>
+</body>
+</html>
